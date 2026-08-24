@@ -1,0 +1,134 @@
+{
+  "name": "My workflow 3",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {},
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "a2d29940-9044-4fdc-8abd-4abd7948775b",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "F0k1JmRvByyR3P59",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-3.5-flash-lite",
+          "mode": "list",
+          "cachedResultName": "models/gemini-3.5-flash-lite"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "You are an expert customer support assistant. Read the following email and write a polite, concise, and helpful reply. Do not invent facts.",
+              "role": "model"
+            },
+            {
+              "content": "=Sender: {{$json.from.value[0].address}}\nSubject: {{$json.subject}}\nBody: {{ $json.text }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "0b39fa16-5870-4553-bbf1-19a5bf67ae8e",
+      "name": "Message a model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "fBhf5lzEGIBmMDhy",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "=Re: {{$node[\"Gmail Trigger\"].json[\"subject\"]}}",
+        "message": "={{ $json.content.parts[0].text }}",
+        "options": {
+          "sendTo": "={{$node[\"Gmail Trigger\"].json[\"from\"][\"value\"][0][\"address\"]}}"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        576,
+        0
+      ],
+      "id": "e2be5e85-1a00-4b60-ac79-ab4f41ceb9da",
+      "name": "Create a draft",
+      "webhookId": "611cd119-13ff-464d-85d3-d85144e9fdce",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "F0k1JmRvByyR3P59",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Message a model1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model1": {
+      "main": [
+        [
+          {
+            "node": "Create a draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "91e65e32-a4f9-411e-9b74-f92c71bc55cf",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ca90e0c7b31c06cca3c958fbdebaeb1bca06230f779104bbba84539243dcca30"
+  },
+  "nodeGroups": [],
+  "id": "rIHsJr7UwGcUXG33",
+  "tags": []
+}
