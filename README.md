@@ -1,25 +1,47 @@
-# Automated Email Triage & Draft Generator
+# Automated AI Email Classifier & Triage (n8n + Gemini)
 
-This repository contains an n8n workflow designed to automatically monitor a Gmail inbox, evaluate incoming messages using an LLM, and generate draft replies for human review. It streamlines inbox management by categorizing emails into actionable buckets (Support, Sales, Spam) and preparing contextual responses.
+An automated n8n pipeline that listens for incoming Gmail messages, evaluates their content and intent using Google Gemini, and dynamically organizes the inbox by applying specific Gmail labels via a multi-branch Switch routing system.
 
-### Architecture Diagram
+---
+
+## Architecture Diagram
 
 ```mermaid
 flowchart LR
-  A[Gmail Trigger] --> B{AI Triage Node}
-  B -- Support/Sales --> C[OpenAI: Draft Reply]
-  B -- Spam/Noise --> D[Gmail: Archive]
-  C --> E[Gmail: Create Draft]
-  E --> F[Slack: Notify User]
+    A[Gmail Trigger: New Email] --> B[Gemini AI: Classify Intent]
+    B --> C{Switch Node: Rules}
+    C -->|Output 0: Category A| D[Gmail: Add Label A]
+    C -->|Output 1: Category B| E[Gmail: Add Label B]
+    C -->|Output 2: Category C| F[Gmail: Add Label C]
 ```
 
-### Business Impact
-* **Time Saved:** Eliminates manual reading and sorting of routine inquiries.
-* **Faster Response Times:** Has a contextual draft ready for review the moment an email is received.
-* **Accuracy:** Uses strict AI system prompts to ensure responses remain polite, concise, and brand-aligned without hallucinating information.
+---
 
-### Setup Instructions
-1. Import the `workflow.json` file into your n8n instance.
-2. Configure your Google OAuth2 credentials to enable the Gmail API trigger and draft actions.
-3. Connect your preferred LLM (e.g., OpenAI, Anthropic, or a local Ollama instance).
-4. Update the system prompts in the LLM nodes to match your specific business context and desired tone.
+## How It Works
+
+1. **Gmail Trigger:** Watches for unread incoming messages and extracts the sender, subject line, and body.
+2. **Message a Model (Gemini):** Analyzes the message context against predefined categories (e.g., *Support*, *Inquiries/Sales*, *Spam/Urgent*) and outputs a clean classification label.
+3. **Switch Node:** Routes the message execution flow into distinct output branches (`0`, `1`, `2`) based on the classification returned by the AI.
+4. **Add Label to Message:** Connects back to Gmail to apply the corresponding label automatically, keeping the inbox organized without manual sorting.
+
+---
+
+## Tech Stack & Nodes
+
+* **Orchestration:** [n8n](https://n8n.io/)
+* **AI Engine:** Google Gemini (`Message a model` node)
+* **Email Provider:** Gmail API (OAuth2)
+* **Logic Routing:** n8n Switch Node (Rules Mode)
+
+---
+
+## Setup & Deployment
+
+1. **Import Workflow:** Download [`workflow.json`](./workflow.json) and import it into your n8n canvas (`Workflows` > `Import from File`).
+2. **Configure Credentials:**
+   * Set up **Gmail OAuth2** credentials in n8n (requires Gmail API enabled in Google Cloud Console).
+   * Set up your **Google AI / Gemini API** credentials.
+3. **Customize Labels:**
+   * Open each **Add label to message** node.
+   * Select your desired Gmail labels for each respective branch.
+4. **Activate:** Toggle the workflow status to **Published / Active**.
