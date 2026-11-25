@@ -1,5 +1,5 @@
 {
-  "name": "My workflow 3",
+  "name": "AI email triage",
   "nodes": [
     {
       "parameters": {
@@ -18,33 +18,27 @@
       "typeVersion": 1.4,
       "position": [
         0,
-        0
+        -16
       ],
       "id": "a2d29940-9044-4fdc-8abd-4abd7948775b",
-      "name": "Gmail Trigger",
-      "credentials": {
-        "gmailOAuth2": {
-          "id": "F0k1JmRvByyR3P59",
-          "name": "Gmail account"
-        }
-      }
+      "name": "Gmail Trigger"
     },
     {
       "parameters": {
         "modelId": {
           "__rl": true,
-          "value": "models/gemini-3.5-flash-lite",
+          "value": "models/gemini-3.1-flash-lite",
           "mode": "list",
-          "cachedResultName": "models/gemini-3.5-flash-lite"
+          "cachedResultName": "models/gemini-3.1-flash-lite"
         },
         "messages": {
           "values": [
             {
-              "content": "You are an expert customer support assistant. Read the following email and write a polite, concise, and helpful reply. Do not invent facts.",
+              "content": "You are an inbox manager. Categorize the following email into one of three buckets: 'Support', 'Sales', or 'Spam'. Respond with ONLY the single category word.",
               "role": "model"
             },
             {
-              "content": "=Sender: {{$json.from.value[0].address}}\nSubject: {{$json.subject}}\nBody: {{ $json.text }}"
+              "content": "=Sender: {{$json.from.value[0].address}}\nSubject: {{$json.subject}}\nBody: {{ $json.text }}\n"
             }
           ]
         },
@@ -55,44 +49,146 @@
       "typeVersion": 1.2,
       "position": [
         224,
-        0
+        -16
       ],
       "id": "0b39fa16-5870-4553-bbf1-19a5bf67ae8e",
-      "name": "Message a model1",
-      "credentials": {
-        "googlePalmApi": {
-          "id": "fBhf5lzEGIBmMDhy",
-          "name": "Google Gemini(PaLM) Api account"
-        }
-      }
+      "name": "Message a model1"
     },
     {
       "parameters": {
-        "resource": "draft",
-        "subject": "=Re: {{$node[\"Gmail Trigger\"].json[\"subject\"]}}",
-        "message": "={{ $json.content.parts[0].text }}",
-        "options": {
-          "sendTo": "={{$node[\"Gmail Trigger\"].json[\"from\"][\"value\"][0][\"address\"]}}"
-        }
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.content.parts[0].text }}",
+                    "rightValue": "Support",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "48598a0e-a697-4871-b822-7b6faf940ff6"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "5dec5554-abc8-4870-bd78-631dbda08077",
+                    "leftValue": "={{ $json.content.parts[0].text }}",
+                    "rightValue": "Sales",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "e542c125-6590-4ba7-9d67-fd0555a9f1a4",
+                    "leftValue": "={{ $json.content.parts[0].text }}",
+                    "rightValue": "Spam",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        576,
+        -32
+      ],
+      "id": "e7226e28-d669-4e71-aa3c-44a202643517",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "REPLACE_WITH_YOUR_LABEL_ID"
+        ]
       },
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.2,
       "position": [
-        576,
-        0
+        800,
+        -208
+      ],
+      "id": "567f8271-1b22-40d1-868b-a12037706ba2",
+      "name": "Add label to message"
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "REPLACE_WITH_YOUR_LABEL_ID"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        800,
+        -16
+      ],
+      "id": "044c7893-73b2-4252-ab0a-8bd037941cac",
+      "name": "Add label to message1"
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "SPAM"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        800,
+        176
       ],
       "id": "e2be5e85-1a00-4b60-ac79-ab4f41ceb9da",
-      "name": "Create a draft",
-      "webhookId": "611cd119-13ff-464d-85d3-d85144e9fdce",
-      "credentials": {
-        "gmailOAuth2": {
-          "id": "F0k1JmRvByyR3P59",
-          "name": "Gmail account"
-        }
-      }
+      "name": "Add label to message2"
     }
   ],
-  "pinData": {},
   "connections": {
     "Gmail Trigger": {
       "main": [
@@ -109,11 +205,41 @@
       "main": [
         [
           {
-            "node": "Create a draft",
+            "node": "Switch",
             "type": "main",
             "index": 0
           }
         ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Add label to message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Add label to message1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Add label to message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add label to message": {
+      "main": [
+        []
       ]
     }
   },
@@ -123,12 +249,5 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "91e65e32-a4f9-411e-9b74-f92c71bc55cf",
-  "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "ca90e0c7b31c06cca3c958fbdebaeb1bca06230f779104bbba84539243dcca30"
-  },
-  "nodeGroups": [],
-  "id": "rIHsJr7UwGcUXG33",
-  "tags": []
+  "nodeGroups": []
 }
